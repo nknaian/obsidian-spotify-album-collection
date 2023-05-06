@@ -1,6 +1,6 @@
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-import axios from 'axios'
+import { SpotifyApi } from './spotify_api';
 
 // Remember to rename these classes and interfaces!
 
@@ -14,48 +14,19 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
+	client_id = 'client-id';
+	client_secret = 'client-secret';
 
 	async onload() {
 		await this.loadSettings();
 
-		// Proof-of-concept for spoitify API integration:
-		// Get the given album using the provided cliend id & secret and show it as a 'notice'
-		const AUTH_ENDPOINT = 'https://accounts.spotify.com/api/token';
-		const API_ENDPOINT = 'https://api.spotify.com/v1/albums';
-		const ALBUM_ID = '5l2Ts5Hd4BN2O28rZksznR';
-		const CLIENT_ID = 'client-id';
-		const CLIENT_SECRET = 'client-secret';
-		const AUTH_HEADER = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
-
-		const authResponse = await axios.post(
-			AUTH_ENDPOINT,
-			'grant_type=client_credentials',
-			{
-				headers: {
-				'Authorization': `Basic ${AUTH_HEADER}`,
-				'Content-Type': 'application/x-www-form-urlencoded',
-				},
-			}
-		);
-
-		const accessToken = authResponse.data.access_token;
-		
-		const albumResponse = await axios.get(
-		`${API_ENDPOINT}/${ALBUM_ID}`,
-		{
-			headers: {
-			'Authorization': `Bearer ${accessToken}`,
-			},
-		}
-		);
-		const albumData = albumResponse.data;
-		
-		new Notice(albumData["name"]);
-
 		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', async (evt: MouseEvent) => {
+			const spotify_api = new SpotifyApi();
+			await spotify_api.init(this.client_id, this.client_secret);
+
+			const album = await spotify_api.get_spotify_album('6eRDE48ttoLqN2VfkEpPOJ');
+			new Notice(`${album?.name} by ${album?.primary_artist}`);
 		});
 		// Perform additional things with the ribbon
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
