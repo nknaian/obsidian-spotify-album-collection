@@ -1,24 +1,6 @@
 import axios from 'axios'
 
-export class SpotifyApiAlbum {
-    name: string;
-    primary_artist: string;
-    img_url: string;
-    img_dimen: number;
-    
-    constructor(album_dict) {
-        try {
-            this.name = album_dict["name"];
-            this.primary_artist = album_dict["artists"][0]["name"];
-            this.img_url = album_dict["images"][0]["url"];
-            this.img_dimen = album_dict["images"][0]["height"];
-        } catch (error) {
-            console.log(error);
-            return;
-        }
-    }
-}
-
+/* Provides client credentials authorization and a selection of API endpoints */
 export class SpotifyApi {
 	access_token: string;
 
@@ -41,16 +23,48 @@ export class SpotifyApi {
     }
 
     /* Get album data using https://developer.spotify.com/documentation/web-api/reference/get-an-album */
-    async get_spotify_album(album_id: string): Promise<SpotifyApiAlbum | null> {
-		const auth_response = await axios.get(
-		`${'https://api.spotify.com/v1/albums'}/${album_id}`,
-		{
-			headers: {
-			'Authorization': `Bearer ${this.access_token}`,
-			},
-		}
-		);
-		
-        return new SpotifyApiAlbum(auth_response.data);
+    async album(id: string): Promise<SpotifyAlbum> {
+        
+        // Verify that id is the correct length
+        if (id.length != SPOTIFY_ID_LENGTH) {
+            throw new Error(`Invalid Spotify ID ${id} - expected string of length ${SPOTIFY_ID_LENGTH}`)
+        }
+        
+        // Make API endpoint request
+        try {
+            const auth_response = await axios.get<SpotifyAlbum>(
+                `${'https://api.spotify.com/v1/albums'}/${id}`,
+                {
+                    headers: {
+                    'Authorization': `Bearer ${this.access_token}`,
+                    },
+                }
+            );
+
+            return auth_response.data;
+        } catch (error) {
+            throw new Error(`Spotify API failure getting album with id ${id}: ${error}`);
+        }
     }
+    async album_from_url(album_url: SpotifyAlbumURL): Promise<SpotifyAlbum> {
+        const id_start_index = album_url.lastIndexOf('/') + 1;
+        const album_id = album_url.substring(id_start_index, id_start_index+SPOTIFY_ID_LENGTH)
+
+        return this.album(album_id);
+    }
+}
+
+/* Constants */
+const SPOTIFY_ID_LENGTH = 22;
+
+/* Types */
+type SpotifyAlbumURL = `https://open.spotify.com/album/${string}`;
+
+/* Interfaces */
+interface SpotifyAlbum {
+    name: string;
+    images: { url: string }[];
+    artists: { name: string }[];
+    id: string;
+    uri: string;
 }

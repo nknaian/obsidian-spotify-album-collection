@@ -25,8 +25,8 @@ export default class MyPlugin extends Plugin {
 			const spotify_api = new SpotifyApi();
 			await spotify_api.init(this.client_id, this.client_secret);
 
-			const album = await spotify_api.get_spotify_album('6eRDE48ttoLqN2VfkEpPOJ');
-			new Notice(`${album?.name} by ${album?.primary_artist}`);
+			const album = await spotify_api.album('4GzjQ0xXRlLl78ih481BUi');
+			new Notice(`${album?.name} by ${album?.artists[0].name}`);
 		});
 		// Perform additional things with the ribbon
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
