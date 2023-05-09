@@ -5,17 +5,17 @@ import { SpotifyApi } from './spotify_api';
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
-	mySetting: string;
+	spotifyClientId: string;
+	spotifyClientSecret: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	spotifyClientId: 'your-client-id',
+	spotifyClientSecret: 'your-client-secret'
 }
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
-	client_id = 'client-id';
-	client_secret = 'client-secret';
 
 	async onload() {
 		await this.loadSettings();
@@ -23,10 +23,15 @@ export default class MyPlugin extends Plugin {
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', async (evt: MouseEvent) => {
 			const spotify_api = new SpotifyApi();
-			await spotify_api.init(this.client_id, this.client_secret);
-
-			const album = await spotify_api.album('4GzjQ0xXRlLl78ih481BUi');
-			new Notice(`${album?.name} by ${album?.artists[0].name}`);
+			
+			try {
+				await spotify_api.init(this.settings.spotifyClientId, this.settings.spotifyClientSecret);
+			
+				const album = await spotify_api.album_from_url('https://open.spotify.com/album/0fO1KemWL2uCCQmM22iKlj?si=2bb07382c6f54c54');
+				new Notice(`${album?.name} by ${album?.artists[0].name}`);
+			} catch (error) {
+				new Notice(error, 10000);
+			}
 		});
 		// Perform additional things with the ribbon
 		ribbonIconEl.addClass('my-plugin-ribbon-class');
@@ -127,17 +132,35 @@ class SampleSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', {text: 'Spotify API Settings'});
+
+		const description = containerEl.createEl('small', {cls: 'settings__description', text: 'You must create your own developer application first. See '});
+		const spotify_api_link = containerEl.createEl('a');
+		spotify_api_link.href = 'https://developer.spotify.com/documentation/web-api/concepts/apps';
+		spotify_api_link.innerText = 'Spotify API guide for creating a developer app'
+		description.append(spotify_api_link);
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('Spotify API Client ID')
+			.setDesc('The client ID for your spotify developer application')
+			.addText(text => text
+				.setPlaceholder('Enter your id')
+				.setValue(this.plugin.settings.spotifyClientId)
+				.onChange(async (value) => {
+					console.log('Spotify Client ID set to: ' + value);
+					this.plugin.settings.spotifyClientId = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Spotify API Client Secret')
+			.setDesc('The client Secret for your spotify developer application')
 			.addText(text => text
 				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setValue(this.plugin.settings.spotifyClientSecret)
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					console.log('Spotify Client Secret set to: ' + value);
+					this.plugin.settings.spotifyClientSecret = value;
 					await this.plugin.saveSettings();
 				}));
 	}
