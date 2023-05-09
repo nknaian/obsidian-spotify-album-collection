@@ -8,18 +8,23 @@ export class SpotifyApi {
     async init(client_id: string, client_secret: string) {
         const auth_header = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
 
-        const auth_response = await axios.post(
-			'https://accounts.spotify.com/api/token',
-			'grant_type=client_credentials',
-			{
-				headers: {
-				'Authorization': `Basic ${auth_header}`,
-				'Content-Type': 'application/x-www-form-urlencoded',
-				},
-			}
-		);
-
-		this.access_token = auth_response.data.access_token;
+        // Make request for API token with client credentials
+        try {
+            const auth_response = await axios.post(
+                'https://accounts.spotify.com/api/token',
+                'grant_type=client_credentials',
+                {
+                    headers: {
+                    'Authorization': `Basic ${auth_header}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                }
+            );
+    
+            this.access_token = auth_response.data.access_token;
+        } catch (error) {
+            throw new Error(`Spotify API failed to initialize with client credentials: ${error}`);
+        }
     }
 
     /* Get album data using https://developer.spotify.com/documentation/web-api/reference/get-an-album */
