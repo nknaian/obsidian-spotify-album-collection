@@ -23,18 +23,19 @@ export class SpotifyApi {
     
             this.access_token = auth_response.data.access_token;
         } catch (error) {
-            throw new Error(`Spotify API failed to initialize with client credentials: ${error}`);
+            console.log(error);
+            throw new Error("Spotify API failed to initialize with your client credentials");
         }
     }
 
     /* Get album data using https://developer.spotify.com/documentation/web-api/reference/get-an-album */
     async album(id: string): Promise<SpotifyAlbum> {
-        
+
         // Verify that id is the correct length
         if (id.length != SPOTIFY_ID_LENGTH) {
-            throw new Error(`Invalid Spotify ID ${id} - expected string of length ${SPOTIFY_ID_LENGTH}`)
+            throw new Error(`Invalid Spotify ID ${id}`)
         }
-        
+
         // Make API endpoint request
         try {
             const auth_response = await axios.get<SpotifyAlbum>(
@@ -48,7 +49,8 @@ export class SpotifyApi {
 
             return auth_response.data;
         } catch (error) {
-            throw new Error(`Spotify API failure getting album with id ${id}: ${error}`);
+            console.log(error);
+            throw new Error(`Spotify API failed to get album with id ${id}`);
         }
     }
     async album_from_url(album_url: SpotifyAlbumURL): Promise<SpotifyAlbum> {
