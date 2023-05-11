@@ -27,7 +27,7 @@ export default class MyPlugin extends Plugin {
 			try {
 				await spotify_api.init(this.settings.spotifyClientId, this.settings.spotifyClientSecret);
 			
-				const album = await spotify_api.album_from_url('https://open.spotify.com/album/0fO1KemWL2uCCQmM22iKlj?si=2bb07382c6f54c54');
+				const album = await spotify_api.albumFromUrl('https://open.spotify.com/album/0fO1KemWL2uCCQmM22iKlj?si=2bb07382c6f54c54');
 				new Notice(`${album?.name} by ${album?.artists[0].name}`);
 			} catch (error) {
 				new Notice(error, 10000);

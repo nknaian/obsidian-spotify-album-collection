@@ -2,26 +2,26 @@ import axios from 'axios'
 
 /* Provides client credentials authorization and a selection of API endpoints */
 export class SpotifyApi {
-	access_token: string;
+	accessToken: string;
 
     /* Initialize API with an access token using https://developer.spotify.com/documentation/web-api/tutorials/client-credentials-flow */
-    async init(client_id: string, client_secret: string) {
-        const auth_header = Buffer.from(`${client_id}:${client_secret}`).toString('base64');
+    async init(clientId: string, clientSecret: string) {
+        const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
         // Make request for API token with client credentials
         try {
-            const auth_response = await axios.post(
+            const authResponse = await axios.post<SpotifyAuth>(
                 'https://accounts.spotify.com/api/token',
                 'grant_type=client_credentials',
                 {
                     headers: {
-                    'Authorization': `Basic ${auth_header}`,
+                    'Authorization': `Basic ${authHeader}`,
                     'Content-Type': 'application/x-www-form-urlencoded',
                     },
                 }
             );
-    
-            this.access_token = auth_response.data.access_token;
+
+            this.accessToken = authResponse.data.access_token;
         } catch (error) {
             console.log(error);
             throw new Error("Spotify API failed to initialize with your client credentials");
@@ -38,26 +38,26 @@ export class SpotifyApi {
 
         // Make API endpoint request
         try {
-            const auth_response = await axios.get<SpotifyAlbum>(
+            const authResponse = await axios.get<SpotifyAlbum>(
                 `${'https://api.spotify.com/v1/albums'}/${id}`,
                 {
                     headers: {
-                    'Authorization': `Bearer ${this.access_token}`,
+                    'Authorization': `Bearer ${this.accessToken}`,
                     },
                 }
             );
 
-            return auth_response.data;
+            return authResponse.data;
         } catch (error) {
             console.log(error);
             throw new Error(`Spotify API failed to get album with id ${id}`);
         }
     }
-    async album_from_url(album_url: SpotifyAlbumURL): Promise<SpotifyAlbum> {
-        const id_start_index = album_url.lastIndexOf('/') + 1;
-        const album_id = album_url.substring(id_start_index, id_start_index+SPOTIFY_ID_LENGTH)
+    async albumFromUrl(albumUrl: SpotifyAlbumURL): Promise<SpotifyAlbum> {
+        const IdStartIndex = albumUrl.lastIndexOf('/') + 1;
+        const albumId = albumUrl.substring(IdStartIndex, IdStartIndex+SPOTIFY_ID_LENGTH)
 
-        return this.album(album_id);
+        return this.album(albumId);
     }
 }
 
@@ -65,10 +65,14 @@ export class SpotifyApi {
 const SPOTIFY_ID_LENGTH = 22;
 
 /* Types */
-type SpotifyAlbumURL = `https://open.spotify.com/album/${string}`;
+export type SpotifyAlbumURL = `https://open.spotify.com/album/${string}`;
 
 /* Interfaces */
-interface SpotifyAlbum {
+interface SpotifyAuth {
+    access_token: string;
+}
+
+export interface SpotifyAlbum {
     name: string;
     images: { url: string }[];
     artists: { name: string }[];
