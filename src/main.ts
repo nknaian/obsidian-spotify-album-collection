@@ -5,11 +5,13 @@ import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL } from './spotify_api';
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
 	spotifyClientSecret: string;
+	albumImportPath: string;
 }
 
 const DEFAULT_SETTINGS: AlbumCollectionSettings = {
 	spotifyClientId: 'your-client-id',
-	spotifyClientSecret: 'your-client-secret'
+	spotifyClientSecret: 'your-client-secret',
+	albumImportPath: ''
 }
 
 export default class AlbumCollectionPlugin extends Plugin {
@@ -25,8 +27,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 			callback: async () => {
 				new ImportAlbumModal(this.app, this.settings, async (albumResult) => {
 					// Set full path for file, with name being "album by artists"
-					const fileName = `${albumResult?.name} by ${albumResult?.artists.map(artist => artist.name).join(", ")}.md`;
-					const filePath = `/${fileName}`
+					const filePath = `${this.settings.albumImportPath}/${albumResult?.name} by ${albumResult?.artists.map(artist => artist.name).join(", ")}.md`;
 
 					// Check if this album file already exists.
 					// If it does, then show a notice that it's already imported and open it
@@ -158,5 +159,19 @@ class AlbumCollectionSettingTab extends PluginSettingTab {
 					this.plugin.settings.spotifyClientSecret = value;
 					await this.plugin.saveSettings();
 				}));
+		
+		containerEl.createEl('h2', {text: 'Storage Settings'});
+
+		new Setting(containerEl)
+		.setName('Album Import Location')
+		.setDesc('Path in vault to store imported albums')
+		.addText(text => text
+			.setPlaceholder('Enter path')
+			.setValue(this.plugin.settings.albumImportPath)
+			.onChange(async (value) => {
+				console.log('Album Import Location set to: ' + value);
+				this.plugin.settings.albumImportPath = value;
+				await this.plugin.saveSettings();
+			}));
 	}
 }
