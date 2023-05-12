@@ -99,9 +99,10 @@ export class SpotifyApi {
 
 /* Constants */
 const SPOTIFY_ID_LENGTH = 22;
+const SPOTIFY_ALBUM_URL_PREFIX = "https://open.spotify.com/album/";
 
 /* Types */
-export type SpotifyAlbumURL = `https://open.spotify.com/album/${string}`;
+export type SpotifyAlbumURL = `${typeof SPOTIFY_ALBUM_URL_PREFIX}${string}`;
 
 /* Interfaces */
 interface SpotifyAuth {
@@ -149,10 +150,10 @@ interface SpotifyAlbumTracks {
 }
 
 export interface SpotifyAlbum {
-    name: string;
-    images: { url: string }[];
-    artists: { name: string }[];
-    id: string;
-    uri: string;
-    external_urls: { spotify: string };
+    name?: string;
+    images?: { url: string }[];
+    artists?: { name: string }[];
+    id?: string;
+    uri?: string;
+    external_urls?: { spotify: string };
 }

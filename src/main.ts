@@ -1,8 +1,8 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, Vault } from 'obsidian';
 
 import { SpotifyApi, SpotifyAlbum, SpotifyTrackAudioFeatures, SpotifyAlbumURL } from './spotify_api';
 
-import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle } from './album_note_format'
+import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle, albumNoteToSpotifyAlbum } from './album_note_format'
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -48,14 +48,35 @@ export default class AlbumCollectionPlugin extends Plugin {
 							this.app.workspace.getLeaf().openFile(newFile);
 	
 							// Append average Audio Features for the album
-							const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
-							const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
-							this.app.vault.append(newFile, albumNoteAudioFeatures(albumTracksAudioFeatures));
+							if (albumResult.id !== undefined) {
+								const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
+								const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
+								this.app.vault.append(newFile, albumNoteAudioFeatures(albumTracksAudioFeatures));
+							}
+
 						}
 					}).open();
 				} catch (error) {
 					new Notice(error, 10000);
 				}
+			}
+		});
+
+		// Add album collection visualization code block processing
+		this.registerMarkdownCodeBlockProcessor("albumcollection", async (source, el, ctx) => {
+			const storageFolder = this.app.vault.getAbstractFileByPath(this.settings.albumStoragePath);
+
+			if (storageFolder instanceof TFolder) {
+				Vault.recurseChildren(storageFolder, async (file: TFile) => {
+					if (file instanceof TFile) {
+						// Get the contents of each file
+						const fileContents = await this.app.vault.cachedRead(file);
+						const spotifyAlbum = albumNoteToSpotifyAlbum(file.name, fileContents);
+						if (spotifyAlbum !== null) {
+							el.createEl('p').innerHTML = albumNoteImageLink(spotifyAlbum);
+						}
+					}
+				});
 			}
 		});
 

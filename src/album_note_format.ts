@@ -5,13 +5,51 @@ import { SpotifyAlbum, SpotifyTrackAudioFeatures } from './spotify_api'
 export function albumNoteTitle(album: SpotifyAlbum): string {
     // Replace any excluded characters in the album name with hyphens
     const OBSIDIAN_TITLE_EXCLUDED_CHARS = /[\\/*?"<>|]/g;
-    const albumName = album.name.replace(OBSIDIAN_TITLE_EXCLUDED_CHARS, "-");
+    const albumName = album.name?.replace(OBSIDIAN_TITLE_EXCLUDED_CHARS, "-");
 
-    return `${albumName} by ${album.artists.map(artist => artist.name).join(", ")}`;
+    return `${albumName} by ${album.artists?.map(artist => artist.name).join(", ")}`;
 }
 
 export function albumNoteImageLink(album: SpotifyAlbum): string {
-    return `<a href="${album.external_urls.spotify}"><img src="${album.images[0].url}" alt="Open in Spotify"></a>`
+    let imageUrl = undefined
+    if (album.images !== undefined) {
+        imageUrl = album.images[0].url;
+    }
+
+    return `<a href="${album.external_urls?.spotify}"><img src="${imageUrl}" alt="Open in Spotify"></a>`
+}
+
+/* Get a SpotifyAlbum object from an album note file */
+export function albumNoteToSpotifyAlbum(name: string, content: string): SpotifyAlbum | null {
+    // Get album name and artists from the name of the file
+    const fileNameRegex = new RegExp(`(.+) by (.+)`);
+    const fileNameMatch = name.match(fileNameRegex);
+
+    // Get album url and image url from the body of content of the file
+    const fileContentRegex = new RegExp(`<a href="(.+)"><img src="(.+)" alt="Open in Spotify"></a>`)
+    const fileContentMatch = content.match(fileContentRegex);
+
+    // Turn matches into a SpotifyAlbum object
+    const albumNameAndArtists: SpotifyAlbum | null = fileNameMatch ? {
+        name: fileNameMatch[1],
+        artists: fileNameMatch[2].split(", ").map(name => ({ name }))
+    } : null
+    if (albumNameAndArtists !== null) {
+        const albumUrlAndImage: SpotifyAlbum | null = fileContentMatch ? {
+            external_urls: { spotify: fileContentMatch[1] },
+            images: [
+                { url: fileContentMatch[2]}
+            ]
+        } : null
+
+        if (albumUrlAndImage === null) {
+            return albumNameAndArtists;
+        } else {
+            return { ...albumNameAndArtists, ...albumUrlAndImage };
+        }
+    }
+
+    return null;
 }
 
 /* Get average audio features for the album from array of track audio features */
