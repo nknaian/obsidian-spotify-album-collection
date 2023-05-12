@@ -7,13 +7,13 @@ import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle } from './al
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
 	spotifyClientSecret: string;
-	albumImportPath: string;
+	albumStoragePath: string;
 }
 
 const DEFAULT_SETTINGS: AlbumCollectionSettings = {
 	spotifyClientId: 'your-client-id',
 	spotifyClientSecret: 'your-client-secret',
-	albumImportPath: ''
+	albumStoragePath: ''
 }
 
 export default class AlbumCollectionPlugin extends Plugin {
@@ -33,7 +33,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 
 					new ImportAlbumModal(this.app, spotifyApi, async (albumResult) => {
 						// Set full path for file, with name being "album by artists"
-						const filePath = `${this.settings.albumImportPath}/${albumNoteTitle(albumResult)}.md`;
+						const filePath = `${this.settings.albumStoragePath}/${albumNoteTitle(albumResult)}.md`;
 
 						// Check if this album file already exists.
 						// If it does, then show a notice that it's already imported and open it
@@ -169,14 +169,14 @@ class AlbumCollectionSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', {text: 'Storage Settings'});
 
 		new Setting(containerEl)
-		.setName('Album Import Location')
-		.setDesc('Path in vault to store imported albums')
+		.setName('Album Storage Location')
+		.setDesc('Path in vault import and search for albums')
 		.addText(text => text
 			.setPlaceholder('Enter path')
-			.setValue(this.plugin.settings.albumImportPath)
+			.setValue(this.plugin.settings.albumStoragePath)
 			.onChange(async (value) => {
-				console.log('Album Import Location set to: ' + value);
-				this.plugin.settings.albumImportPath = value;
+				console.log('Album Storage Location set to: ' + value);
+				this.plugin.settings.albumStoragePath = value;
 				await this.plugin.saveSettings();
 			}));
 	}
