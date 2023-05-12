@@ -66,6 +66,9 @@ export default class AlbumCollectionPlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor("albumcollection", async (source, el, ctx) => {
 			const storageFolder = this.app.vault.getAbstractFileByPath(this.settings.albumStoragePath);
 
+			const albumGrid = el.createDiv();
+			albumGrid.classList.add("album__grid");
+
 			if (storageFolder instanceof TFolder) {
 				Vault.recurseChildren(storageFolder, async (file: TFile) => {
 					if (file instanceof TFile) {
@@ -73,7 +76,13 @@ export default class AlbumCollectionPlugin extends Plugin {
 						const fileContents = await this.app.vault.cachedRead(file);
 						const spotifyAlbum = albumNoteToSpotifyAlbum(file.name, fileContents);
 						if (spotifyAlbum !== null) {
-							el.createEl('p').innerHTML = albumNoteImageLink(spotifyAlbum);
+							const albumLink = albumGrid.createEl("a");
+							albumLink.href = spotifyAlbum.external_urls !== undefined ? spotifyAlbum.external_urls?.spotify : "";
+							
+							const albumImg = albumLink.createEl("img");
+							albumImg.src = spotifyAlbum.images !== undefined ? spotifyAlbum.images[0].url : "";
+							albumImg.alt = "Open in Spotify";
+							albumImg.classList.add("album__grid__img")
 						}
 					}
 				});
