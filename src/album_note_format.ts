@@ -10,12 +10,8 @@ export function albumNoteTitle(album: SpotifyAlbum): string {
     return `${albumName} by ${album.artists.map(artist => artist.name).join(", ")}`;
 }
 
-export function albumNoteUrl(album: SpotifyAlbum): string {
-    return `[Open in Spotify](${album.external_urls.spotify})`;
-}
-
-export function albumNoteImage(album: SpotifyAlbum): string {
-    return `![album image](${album.images[0].url})`;
+export function albumNoteImageLink(album: SpotifyAlbum): string {
+    return `<a href="${album.external_urls.spotify}"><img src="${album.images[0].url}" alt="Open in Spotify"></a>`
 }
 
 /* Get average audio features for the album from array of track audio features */
@@ -66,5 +62,5 @@ export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAud
     avgString += `Tempo: ${avgTempo.toFixed(2)}\n`;
     avgString += `Valence: ${avgValence.toFixed(2)}`;
 
-    return avgString;
+    return `# Average [Audio Features](https://developer.spotify.com/documentation/web-api/reference/get-audio-features)\n${avgString}`;
 }

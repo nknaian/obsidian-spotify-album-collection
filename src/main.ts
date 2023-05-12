@@ -2,7 +2,7 @@ import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'ob
 
 import { SpotifyApi, SpotifyAlbum, SpotifyTrackAudioFeatures, SpotifyAlbumURL } from './spotify_api';
 
-import { albumNoteAudioFeatures, albumNoteImage, albumNoteTitle, albumNoteUrl } from './album_note_format'
+import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle } from './album_note_format'
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -43,14 +43,14 @@ export default class AlbumCollectionPlugin extends Plugin {
 							new Notice(`Album already imported`);
 							this.app.workspace.getLeaf().openFile(file);
 						} else {
-							// Create file, filling initially with url, image and headings
-							const newFile = await this.app.vault.create(filePath, `\n${albumNoteUrl(albumResult)}\n${albumNoteImage(albumResult)}\n\n# Notes:\n\n\n`);
+							// Create file, filling initially with image link and headings
+							const newFile = await this.app.vault.create(filePath, `\n${albumNoteImageLink(albumResult)}\n\n# Notes:\n\n\n`);
 							this.app.workspace.getLeaf().openFile(newFile);
 	
 							// Append average Audio Features for the album
 							const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
 							const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
-							this.app.vault.append(newFile, `# Audio Features:\n${albumNoteAudioFeatures(albumTracksAudioFeatures)}`);
+							this.app.vault.append(newFile, albumNoteAudioFeatures(albumTracksAudioFeatures));
 						}
 					}).open();
 				} catch (error) {
