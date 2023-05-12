@@ -1,6 +1,8 @@
 import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
-import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL } from './spotify_api';
+import { SpotifyApi, SpotifyAlbum, SpotifyTrackAudioFeatures, SpotifyAlbumURL } from './spotify_api';
+
+import { albumNoteAudioFeatures, albumNoteImage, albumNoteTitle, albumNoteUrl } from './album_note_format'
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -25,22 +27,35 @@ export default class AlbumCollectionPlugin extends Plugin {
 			id: 'import-album',
 			name: 'Import Album',
 			callback: async () => {
-				new ImportAlbumModal(this.app, this.settings, async (albumResult) => {
-					// Set full path for file, with name being "album by artists"
-					const filePath = `${this.settings.albumImportPath}/${albumResult?.name} by ${albumResult?.artists.map(artist => artist.name).join(", ")}.md`;
+				const spotifyApi = new SpotifyApi();
+				try {
+					await spotifyApi.init(this.settings.spotifyClientId, this.settings.spotifyClientSecret);
 
-					// Check if this album file already exists.
-					// If it does, then show a notice that it's already imported and open it
-					// Otherwise, create the new file, filling with API data, and then open it
-					const file = app.vault.getAbstractFileByPath(filePath);
-					if (file instanceof TFile) {
-						new Notice(`Album already imported`);
-						this.app.workspace.getLeaf().openFile(file);
-					} else {
-						const newFile = await this.app.vault.create(filePath, `[Open in Spotify](${albumResult.external_urls.spotify})\n\n![album image](${albumResult.images[0].url})\n\n# Review\n`);
-						this.app.workspace.getLeaf().openFile(newFile);
-					}
-				}).open();
+					new ImportAlbumModal(this.app, spotifyApi, async (albumResult) => {
+						// Set full path for file, with name being "album by artists"
+						const filePath = `${this.settings.albumImportPath}/${albumNoteTitle(albumResult)}.md`;
+
+						// Check if this album file already exists.
+						// If it does, then show a notice that it's already imported and open it
+						// Otherwise, create the new file, filling it with information
+						const file = app.vault.getAbstractFileByPath(filePath);
+						if (file instanceof TFile) {
+							new Notice(`Album already imported`);
+							this.app.workspace.getLeaf().openFile(file);
+						} else {
+							// Create file, filling initially with url, image and headings
+							const newFile = await this.app.vault.create(filePath, `\n${albumNoteUrl(albumResult)}\n${albumNoteImage(albumResult)}\n\n# Notes:\n\n\n`);
+							this.app.workspace.getLeaf().openFile(newFile);
+	
+							// Append average Audio Features for the album
+							const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
+							const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
+							this.app.vault.append(newFile, `# Audio Features:\n${albumNoteAudioFeatures(albumTracksAudioFeatures)}`);
+						}
+					}).open();
+				} catch (error) {
+					new Notice(error, 10000);
+				}
 			}
 		});
 
@@ -62,28 +77,19 @@ export default class AlbumCollectionPlugin extends Plugin {
 }
 
 class ImportAlbumModal extends Modal {
-	settings: AlbumCollectionSettings;
+	spotifyApi: SpotifyApi;
 	spotifyUrl: SpotifyAlbumURL;
 	albumResult: SpotifyAlbum;
 	onSubmit: (albumResult: SpotifyAlbum) => void;
 
-	constructor(app: App, settings: AlbumCollectionSettings, onSubmit: (albumResult: SpotifyAlbum) => void) {
+	constructor(app: App, spotifyApi: SpotifyApi, onSubmit: (albumResult: SpotifyAlbum) => void) {
 		super(app);
-		this.settings = settings;
+		this.spotifyApi = spotifyApi;
 		this.onSubmit = onSubmit;
 	}
 
 	async onOpen() {
 		const {contentEl} = this;
-
-		// Initialize spotify api token
-		const spotifyApi = new SpotifyApi();
-		try {
-			await spotifyApi.init(this.settings.spotifyClientId, this.settings.spotifyClientSecret);
-		} catch (error) {
-			new Notice(error, 10000);
-			this.close();
-		}
 
 		contentEl.createEl("h2", { text: "Import Spotify Album" });
 
@@ -100,7 +106,7 @@ class ImportAlbumModal extends Modal {
 				.setCta()
 				.onClick(async () => {
 					try {
-						this.albumResult = await spotifyApi.albumFromUrl(this.spotifyUrl);
+						this.albumResult = await this.spotifyApi.albumFromUrl(this.spotifyUrl);
 						this.onSubmit(this.albumResult);
 						this.close();
 					} catch (error) {

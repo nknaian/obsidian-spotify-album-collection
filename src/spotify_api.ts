@@ -15,8 +15,8 @@ export class SpotifyApi {
                 'grant_type=client_credentials',
                 {
                     headers: {
-                    'Authorization': `Basic ${authHeader}`,
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                        'Authorization': `Basic ${authHeader}`,
+                        'Content-Type': 'application/x-www-form-urlencoded',
                     },
                 }
             );
@@ -38,16 +38,16 @@ export class SpotifyApi {
 
         // Make API endpoint request
         try {
-            const authResponse = await axios.get<SpotifyAlbum>(
+            const response = await axios.get<SpotifyAlbum>(
                 `${'https://api.spotify.com/v1/albums'}/${id}`,
                 {
                     headers: {
-                    'Authorization': `Bearer ${this.accessToken}`,
+                        'Authorization': `Bearer ${this.accessToken}`,
                     },
                 }
             );
 
-            return authResponse.data;
+            return response.data;
         } catch (error) {
             console.log(error);
             throw new Error(`Spotify API failed to get album with id ${id}`);
@@ -58,6 +58,42 @@ export class SpotifyApi {
         const albumId = albumUrl.substring(IdStartIndex, IdStartIndex+SPOTIFY_ID_LENGTH)
 
         return this.album(albumId);
+    }
+
+    /* Get track data using https://developer.spotify.com/documentation/web-api/reference/get-an-albums-tracks */
+    async albumTracks(id: string): Promise<SpotifyTrack[]> {
+        try {
+            const response = await axios.get<SpotifyAlbumTracks>(
+                `https://api.spotify.com/v1/albums/${id}/tracks`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                    },
+                }
+            );
+            return response.data.items;
+        } catch (error) {
+            console.log(error);
+            throw new Error(`Spotify API failed to get album's tracks with id ${id}`);
+        }
+    }
+
+    /* Get audio features for a list of tracks using https://developer.spotify.com/documentation/web-api/reference/get-several-audio-features */
+    async tracksAudioFeatures(ids: string[]): Promise<SpotifyTrackAudioFeatures[]> {
+        try {
+            const response = await axios.get<SpotifyTracksAudioFeatures>(
+                `https://api.spotify.com/v1/audio-features?ids=${ids.join(",")}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${this.accessToken}`,
+                    },
+                }
+            );
+            return response.data.audio_features;
+        } catch (error) {
+            console.log(error);
+            throw new Error("Spotify API failed to get tracks audio features");
+        }
     }
 }
 
@@ -70,6 +106,46 @@ export type SpotifyAlbumURL = `https://open.spotify.com/album/${string}`;
 /* Interfaces */
 interface SpotifyAuth {
     access_token: string;
+}
+
+export interface SpotifyTrackAudioFeatures {
+    acousticness: number;
+    danceability: number;
+    energy: number;
+    instrumentalness: number;
+    liveness: number;
+    loudness: number;
+    speechiness: number;
+    tempo: number;
+    valence: number;
+}
+
+interface SpotifyTracksAudioFeatures {
+    audio_features: {
+        acousticness: number;
+        danceability: number;
+        energy: number;
+        instrumentalness: number;
+        liveness: number;
+        loudness: number;
+        speechiness: number;
+        tempo: number;
+        valence: number;
+    }[];
+}
+
+export interface SpotifyTrack {
+    id: string;
+    name: string;
+    uri: string;
+}
+  
+interface SpotifyAlbumTracks {
+    items: {
+        id: string;
+        name: string;
+        uri: string;
+    }[];
 }
 
 export interface SpotifyAlbum {
