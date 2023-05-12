@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL } from './spotify_api';
 
@@ -23,8 +23,22 @@ export default class AlbumCollectionPlugin extends Plugin {
 			id: 'import-album',
 			name: 'Import Album',
 			callback: async () => {
-				new ImportAlbumModal(this.app, this.settings, (albumResult) => {
-					new Notice(`${albumResult?.name} by ${albumResult?.artists[0].name}`);
+				new ImportAlbumModal(this.app, this.settings, async (albumResult) => {
+					// Set full path for file, with name being "album by artists"
+					const fileName = `${albumResult?.name} by ${albumResult?.artists.map(artist => artist.name).join(", ")}.md`;
+					const filePath = `/${fileName}`
+
+					// Check if this album file already exists.
+					// If it does, then show a notice that it's already imported and open it
+					// Otherwise, create the new file, filling with API data, and then open it
+					const file = app.vault.getAbstractFileByPath(filePath);
+					if (file instanceof TFile) {
+						new Notice(`Album already imported`);
+						this.app.workspace.getLeaf().openFile(file);
+					} else {
+						const newFile = await this.app.vault.create(filePath, `[Open in Spotify](${albumResult.external_urls.spotify})\n\n![album image](${albumResult.images[0].url})\n\n# Review\n`);
+						this.app.workspace.getLeaf().openFile(newFile);
+					}
 				}).open();
 			}
 		});
@@ -115,7 +129,7 @@ class AlbumCollectionSettingTab extends PluginSettingTab {
 
 		containerEl.createEl('h2', {text: 'Spotify API Settings'});
 
-		const description = containerEl.createEl('small', {cls: 'settings__description', text: 'You must create your own developer application first. See '});
+		const description = containerEl.createEl('small', {text: 'You must create your own developer application first. See '});
 		const spotifyApLink = containerEl.createEl('a');
 		spotifyApLink.href = 'https://developer.spotify.com/documentation/web-api/concepts/apps';
 		spotifyApLink.innerText = 'Spotify API guide for creating a developer app'

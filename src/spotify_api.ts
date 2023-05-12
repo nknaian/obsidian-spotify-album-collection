@@ -78,4 +78,5 @@ export interface SpotifyAlbum {
     artists: { name: string }[];
     id: string;
     uri: string;
+    external_urls: { spotify: string };
 }
