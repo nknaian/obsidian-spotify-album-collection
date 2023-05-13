@@ -77,6 +77,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 						const spotifyAlbum = albumNoteToSpotifyAlbum(file.name, fileContents);
 						if (spotifyAlbum !== null) {
 							const albumLink = albumGrid.createEl("a");
+							albumLink.title = albumNoteTitle(spotifyAlbum);
 							albumLink.href = spotifyAlbum.external_urls !== undefined ? spotifyAlbum.external_urls?.spotify : "";
 							
 							const albumImg = albumLink.createEl("img");
