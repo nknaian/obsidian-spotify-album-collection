@@ -40,7 +40,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 						// Otherwise, create the new file, filling it with information
 						const file = app.vault.getAbstractFileByPath(filePath);
 						if (file instanceof TFile) {
-							new Notice(`Album already imported`);
+							new Notice(`Album with same name already imported. If this is a different album, please adjust the name of the existing note to differentiate them`);
 							this.app.workspace.getLeaf().openFile(file);
 						} else {
 							// Create file, filling initially with image link and headings
