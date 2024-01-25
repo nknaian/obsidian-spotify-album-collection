@@ -87,3 +87,15 @@ export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAud
 
     return text;
 }
+
+/* Get total length of album in minutes from track lengths
+*/
+export function albumNoteAlbumLengthMins(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): string {
+    let length_min = 0;
+    
+    albumTracksAudioFeatures.forEach(track => {
+        length_min += (track.duration_ms / 60000);
+    });
+
+    return length_min.toFixed(0);
+}

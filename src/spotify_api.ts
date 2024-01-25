@@ -119,6 +119,7 @@ export interface SpotifyTrackAudioFeatures {
     speechiness: number;
     tempo: number;
     valence: number;
+    duration_ms: number;
 }
 
 interface SpotifyTracksAudioFeatures {
@@ -132,6 +133,7 @@ interface SpotifyTracksAudioFeatures {
         speechiness: number;
         tempo: number;
         valence: number;
+        duration_ms: number;
     }[];
 }
 

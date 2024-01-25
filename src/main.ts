@@ -2,7 +2,7 @@ import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, 
 
 import { SpotifyApi, SpotifyAlbum, SpotifyTrackAudioFeatures, SpotifyAlbumURL } from './spotify_api';
 
-import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle } from './album_note_format'
+import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle, albumNoteAlbumLengthMins } from './album_note_format'
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -52,24 +52,24 @@ export default class AlbumCollectionPlugin extends Plugin {
 								const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
 								const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
 								this.app.vault.append(newFile, `${albumNoteAudioFeatures(albumTracksAudioFeatures)}\n\n\n`);
-							}
-
-							this.app.fileManager.processFrontMatter(newFile, async (fm) => {
-								// Wow, this works! Now I want to figure out if there's a way to change the "type"
-								// of property from here....ex: if I want to have "discovered date" in the properties...
-								const firstArtist = albumResult.artists?.[0];
-								if (firstArtist) {
-									fm['Artist'] = albumResult ? `[[${firstArtist.name}]]` : '';
-
-									const numArtists = albumResult.artists?.length;
-									if (numArtists && numArtists > 1) {
-										fm['Extra Artists'] = albumResult.artists?.slice(1).map(artist => artist.name).join(", ");
+							
+								this.app.fileManager.processFrontMatter(newFile, async (fm) => {
+									// Wow, this works! Now I want to figure out if there's a way to change the "type"
+									// of property from here....ex: if I want to have "discovered date" in the properties...
+									const firstArtist = albumResult.artists?.[0];
+									if (firstArtist) {
+										fm['Artist'] = albumResult ? `[[${firstArtist.name}]]` : '';
+	
+										const numArtists = albumResult.artists?.length;
+										if (numArtists && numArtists > 1) {
+											fm['Add Artists'] = albumResult.artists?.slice(1).map(artist => artist.name).join(", ");
+										}
 									}
-								}
-								fm['Release Date'] = albumResult.release_date;
-								fm['Import Date'] = new Date().toISOString().split('T')[0];
-							});
-
+									fm['Length'] = `${albumNoteAlbumLengthMins(albumTracksAudioFeatures)} mins`;
+									fm['Released'] = albumResult.release_date;
+									fm['Imported'] = new Date().toISOString().split('T')[0];
+								});
+							}
 						}
 					}).open();
 				} catch (error) {
