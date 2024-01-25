@@ -151,8 +151,10 @@ interface SpotifyAlbumTracks {
 
 export interface SpotifyAlbum {
     name?: string;
+    release_date?: string;
     images?: { url: string }[];
     artists?: { name: string }[];
+    genres?: { genre: string }[];
     id?: string;
     uri?: string;
     external_urls?: { spotify: string };

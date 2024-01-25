@@ -2,7 +2,7 @@ import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, 
 
 import { SpotifyApi, SpotifyAlbum, SpotifyTrackAudioFeatures, SpotifyAlbumURL } from './spotify_api';
 
-import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle, albumNoteToSpotifyAlbum } from './album_note_format'
+import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle } from './album_note_format'
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -44,49 +44,37 @@ export default class AlbumCollectionPlugin extends Plugin {
 							this.app.workspace.getLeaf().openFile(file);
 						} else {
 							// Create file, filling initially with image link and headings
-							const newFile = await this.app.vault.create(filePath, `\n${albumNoteImageLink(albumResult)}\n\n# Notes:\n\n\n`);
+							const newFile = await this.app.vault.create(filePath, `\n${albumNoteImageLink(albumResult)}\n\n`);
 							this.app.workspace.getLeaf().openFile(newFile);
 	
 							// Append average Audio Features for the album
 							if (albumResult.id !== undefined) {
 								const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
 								const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
-								this.app.vault.append(newFile, albumNoteAudioFeatures(albumTracksAudioFeatures));
+								this.app.vault.append(newFile, `${albumNoteAudioFeatures(albumTracksAudioFeatures)}\n\n\n`);
 							}
+
+							this.app.fileManager.processFrontMatter(newFile, async (fm) => {
+								// Wow, this works! Now I want to figure out if there's a way to change the "type"
+								// of property from here....ex: if I want to have "discovered date" in the properties...
+								const firstArtist = albumResult.artists?.[0];
+								if (firstArtist) {
+									fm['Artist'] = albumResult ? `[[${firstArtist.name}]]` : '';
+
+									const numArtists = albumResult.artists?.length;
+									if (numArtists && numArtists > 1) {
+										fm['Extra Artists'] = albumResult.artists?.slice(1).map(artist => artist.name).join(", ");
+									}
+								}
+								fm['Release Date'] = albumResult.release_date;
+								fm['Import Date'] = new Date().toISOString().split('T')[0];
+							});
 
 						}
 					}).open();
 				} catch (error) {
 					new Notice(error, 10000);
 				}
-			}
-		});
-
-		// Add album collection visualization code block processing
-		this.registerMarkdownCodeBlockProcessor("albumcollection", async (source, el, ctx) => {
-			const storageFolder = this.app.vault.getAbstractFileByPath(this.settings.albumStoragePath);
-
-			const albumGrid = el.createDiv();
-			albumGrid.classList.add("album__grid");
-
-			if (storageFolder instanceof TFolder) {
-				Vault.recurseChildren(storageFolder, async (file: TFile) => {
-					if (file instanceof TFile) {
-						// Get the contents of each file
-						const fileContents = await this.app.vault.cachedRead(file);
-						const spotifyAlbum = albumNoteToSpotifyAlbum(file.name, fileContents);
-						if (spotifyAlbum !== null) {
-							const albumLink = albumGrid.createEl("a");
-							albumLink.title = albumNoteTitle(spotifyAlbum);
-							albumLink.href = spotifyAlbum.external_urls !== undefined ? spotifyAlbum.external_urls?.spotify : "";
-							
-							const albumImg = albumLink.createEl("img");
-							albumImg.src = spotifyAlbum.images !== undefined ? spotifyAlbum.images[0].url : "";
-							albumImg.alt = "Open in Spotify";
-							albumImg.classList.add("album__grid__img")
-						}
-					}
-				});
 			}
 		});
 
@@ -133,7 +121,7 @@ class ImportAlbumModal extends Modal {
 	
 		new Setting(contentEl)
 			.addButton((btn) => btn
-				.setButtonText("Submit")
+				.setButtonText("Import")
 				.setCta()
 				.onClick(async () => {
 					try {
@@ -201,7 +189,7 @@ class AlbumCollectionSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 		.setName('Album Storage Location')
-		.setDesc('Path in vault import and search for albums')
+		.setDesc('Path to import albums to')
 		.addText(text => text
 			.setPlaceholder('Enter path')
 			.setValue(this.plugin.settings.albumStoragePath)
