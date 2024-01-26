@@ -6,7 +6,14 @@ export class SpotifyApi {
 
     /* Initialize API with an access token using https://developer.spotify.com/documentation/web-api/tutorials/client-credentials-flow */
     async init(clientId: string, clientSecret: string) {
-        const authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        // Convert client id and secret to base64-encoded string, falling back to the legacy btoa
+        // function for the case where the NodeJS "Buffer" isn't available (i.e. mobile) 
+        let authHeader: string;
+        try {
+            authHeader = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+        } catch {
+            authHeader = btoa(`${clientId}:${clientSecret}`);
+        }
 
         // Make request for API token with client credentials
         try {
