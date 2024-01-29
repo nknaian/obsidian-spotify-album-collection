@@ -67,7 +67,6 @@ export default class AlbumCollectionPlugin extends Plugin {
 									}
 									fm['Length'] = `${albumNoteAlbumLengthMins(albumTracksAudioFeatures)} mins`;
 									fm['Released'] = albumResult.release_date;
-									fm['Imported'] = new Date().toISOString().split('T')[0];
 								});
 							}
 						}
