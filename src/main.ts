@@ -51,22 +51,23 @@ export default class AlbumCollectionPlugin extends Plugin {
 							if (albumResult.id !== undefined) {
 								const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
 								const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
-								this.app.vault.append(newFile, `${albumNoteAudioFeatures(albumTracksAudioFeatures)}\n\n\n`);
+								const avgAlbumAudioFeatures = albumNoteAudioFeatures(albumTracksAudioFeatures)
 							
 								this.app.fileManager.processFrontMatter(newFile, async (fm) => {
-									// Wow, this works! Now I want to figure out if there's a way to change the "type"
-									// of property from here....ex: if I want to have "discovered date" in the properties...
-									const firstArtist = albumResult.artists?.[0];
-									if (firstArtist) {
-										fm['Artist'] = albumResult ? `[[${firstArtist.name}]]` : '';
-	
-										const numArtists = albumResult.artists?.length;
-										if (numArtists && numArtists > 1) {
-											fm['Add Artists'] = albumResult.artists?.slice(1).map(artist => artist.name).join(", ");
-										}
-									}
-									fm['Length'] = `${albumNoteAlbumLengthMins(albumTracksAudioFeatures)} mins`;
-									fm['Released'] = albumResult.release_date;
+									fm['artists'] = albumResult.artists?.map(artist => `[[${artist.name}]]`);
+									fm['release_date'] = albumResult.release_date;
+									fm['length_mins'] = `${albumNoteAlbumLengthMins(albumTracksAudioFeatures)}`;
+									fm['acousticness'] = avgAlbumAudioFeatures['acousticness'];
+									fm['danceability'] = avgAlbumAudioFeatures['danceability'];
+									fm['energy'] = avgAlbumAudioFeatures['energy'];
+									fm['instrumentalness'] = avgAlbumAudioFeatures['instrumentalness'];
+									fm['liveness'] = avgAlbumAudioFeatures['liveness'];
+									fm['speechiness'] = avgAlbumAudioFeatures['speechiness'];
+									fm['valence'] = avgAlbumAudioFeatures['valence'];
+									fm['loudness_dB'] = avgAlbumAudioFeatures['loudness_dB'];
+									fm['tempo_bpm'] = avgAlbumAudioFeatures['tempo_bpm'];
+									fm['cover_img_link'] = albumNoteImageLink(albumResult); // And this should just be the normal unclickable image
+									// Add the link to spotify as a clickable "icon" like I have in the album collections web app
 								});
 							}
 						}

@@ -27,7 +27,7 @@ export function albumNoteImageLink(album: SpotifyAlbum): string {
 /* Get average audio features for the album from array of track audio features and return
    an text representation, utilizing progress bars to represent 0-1 values
 */
-export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): string {
+export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): { [key: string]: string }  {
     const numTracks = albumTracksAudioFeatures.length;
     let sumAcousticness = 0;
     let sumDanceability = 0;
@@ -53,39 +53,19 @@ export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAud
     });
 
     // Divide by the total number of tracks to get the average values for each audio feature
-    const avgAcousticness = sumAcousticness / numTracks;
-    const avgDanceability = sumDanceability / numTracks;
-    const avgEnergy = sumEnergy / numTracks;
-    const avgInstrumentalness = sumInstrumentalness / numTracks;
-    const avgLiveness = sumLiveness / numTracks;
-    const avgLoudness = sumLoudness / numTracks;
-    const avgSpeechiness = sumSpeechiness / numTracks;
-    const avgTempo = sumTempo / numTracks;
-    const avgValence = sumValence / numTracks;
+    const result: { [key: string]: string } = {
+        acousticness: (sumAcousticness / numTracks).toFixed(2),
+        danceability: (sumDanceability / numTracks).toFixed(2),
+        energy: (sumEnergy / numTracks).toFixed(2),
+        instrumentalness: (sumInstrumentalness / numTracks).toFixed(2),
+        liveness: (sumLiveness / numTracks).toFixed(2),
+        speechiness: (sumSpeechiness / numTracks).toFixed(2),
+        valence: (sumValence / numTracks).toFixed(2),
+        loudness_dB: (sumLoudness / numTracks).toFixed(2),
+        tempo_bpm: (sumTempo / numTracks).toFixed(0)
+    };
 
-
-    // <ul>
-    // <!-- https://developer.spotify.com/documentation/web-api/reference/get-audio-features-->
-    // <li><i>Danceability:</i> <progress id="numeric-value" min="0" max="1" value="0.2">70%</progress></li>
-    // <li> Loudness: <i>-9.35 dB</i></li>
-    // <li>Energy: <progress id="numeric-value" min="0" max="1" value="0.62">70%</progress></li>
-    // <li>Tempo: <i>121.78 BPM</i></li>
-    // </ul>
-
-    // Construct a string containing the averaged values for each audio feature
-    let text = "| [Audio Feature](https://developer.spotify.com/documentation/web-api/reference/get-audio-features) | Average Value |\n";
-    text += "| ---- | ---- |\n"
-    text += `| Acousticness | <progress min="0" max="1" value="${avgAcousticness.toFixed(2)}"></progress> |\n`;
-    text += `| Danceability | <progress min="0" max="1" value="${avgDanceability.toFixed(2)}"></progress> |\n`;
-    text += `| Energy | <progress min="0" max="1" value="${avgEnergy.toFixed(2)}"></progress> |\n`;
-    text += `| Instrumentalness | <progress min="0" max="1" value="${avgInstrumentalness.toFixed(2)}"></progress> |\n`;
-    text += `| Liveness | <progress min="0" max="1" value="${avgLiveness.toFixed(2)}"></progress> |\n`;
-    text += `| Speechiness | <progress min="0" max="1" value="${avgSpeechiness.toFixed(2)}"></progress> |\n`;
-    text += `| Valence | <progress min="0" max="1" value="${avgValence.toFixed(2)}"></progress> |\n`;
-    text += `| Loudness | ${avgLoudness.toFixed(2)} dB |\n`;
-    text += `| Tempo | ${avgTempo.toFixed(0)} BPM |`;
-
-    return text;
+    return result;
 }
 
 /* Get total length of album in minutes from track lengths
