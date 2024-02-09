@@ -47,16 +47,20 @@ export default class AlbumCollectionPlugin extends Plugin {
 							const newFile = await this.app.vault.create(filePath, `\n${albumNoteImageLink(albumResult)}\n\n`);
 							this.app.workspace.getLeaf().openFile(newFile);
 	
-							// Append average Audio Features for the album
+							// Attach various info about the album to the note as properties
 							if (albumResult.id !== undefined) {
 								const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
 								const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
-								const avgAlbumAudioFeatures = albumNoteAudioFeatures(albumTracksAudioFeatures)
+								const avgAlbumAudioFeatures = albumNoteAudioFeatures(albumTracksAudioFeatures);
+								let cover_image = ""
+								if (albumResult.images !== undefined) {
+									cover_image = albumResult.images[0].url;
+								}
 							
 								this.app.fileManager.processFrontMatter(newFile, async (fm) => {
 									fm['artists'] = albumResult.artists?.map(artist => `[[${artist.name}]]`);
 									fm['release_date'] = albumResult.release_date;
-									fm['length_mins'] = `${albumNoteAlbumLengthMins(albumTracksAudioFeatures)}`;
+									fm['length_mins'] = albumNoteAlbumLengthMins(albumTracksAudioFeatures);
 									fm['acousticness'] = avgAlbumAudioFeatures['acousticness'];
 									fm['danceability'] = avgAlbumAudioFeatures['danceability'];
 									fm['energy'] = avgAlbumAudioFeatures['energy'];
@@ -66,8 +70,9 @@ export default class AlbumCollectionPlugin extends Plugin {
 									fm['valence'] = avgAlbumAudioFeatures['valence'];
 									fm['loudness_dB'] = avgAlbumAudioFeatures['loudness_dB'];
 									fm['tempo_bpm'] = avgAlbumAudioFeatures['tempo_bpm'];
-									fm['cover_img_link'] = albumNoteImageLink(albumResult); // And this should just be the normal unclickable image
-									// Add the link to spotify as a clickable "icon" like I have in the album collections web app
+									fm['album_type'] = albumResult.album_type;
+									fm['cover_image'] = cover_image;
+									fm['spotify_url'] = albumResult.external_urls?.spotify
 								});
 							}
 						}

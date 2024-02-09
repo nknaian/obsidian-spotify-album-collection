@@ -167,4 +167,5 @@ export interface SpotifyAlbum {
     id?: string;
     uri?: string;
     external_urls?: { spotify: string };
+    album_type?: string;
 }

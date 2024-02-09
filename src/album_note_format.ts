@@ -27,7 +27,7 @@ export function albumNoteImageLink(album: SpotifyAlbum): string {
 /* Get average audio features for the album from array of track audio features and return
    an text representation, utilizing progress bars to represent 0-1 values
 */
-export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): { [key: string]: string }  {
+export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): { [key: string]: number }  {
     const numTracks = albumTracksAudioFeatures.length;
     let sumAcousticness = 0;
     let sumDanceability = 0;
@@ -53,16 +53,16 @@ export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAud
     });
 
     // Divide by the total number of tracks to get the average values for each audio feature
-    const result: { [key: string]: string } = {
-        acousticness: (sumAcousticness / numTracks).toFixed(2),
-        danceability: (sumDanceability / numTracks).toFixed(2),
-        energy: (sumEnergy / numTracks).toFixed(2),
-        instrumentalness: (sumInstrumentalness / numTracks).toFixed(2),
-        liveness: (sumLiveness / numTracks).toFixed(2),
-        speechiness: (sumSpeechiness / numTracks).toFixed(2),
-        valence: (sumValence / numTracks).toFixed(2),
-        loudness_dB: (sumLoudness / numTracks).toFixed(2),
-        tempo_bpm: (sumTempo / numTracks).toFixed(0)
+    const result: { [key: string]: number } = {
+        acousticness: Number((sumAcousticness / numTracks).toFixed(2)),
+        danceability: Number((sumDanceability / numTracks).toFixed(2)),
+        energy: Number((sumEnergy / numTracks).toFixed(2)),
+        instrumentalness: Number((sumInstrumentalness / numTracks).toFixed(2)),
+        liveness: Number((sumLiveness / numTracks).toFixed(2)),
+        speechiness: Number((sumSpeechiness / numTracks).toFixed(2)),
+        valence: Number((sumValence / numTracks).toFixed(2)),
+        loudness_dB: Number((sumLoudness / numTracks).toFixed(2)),
+        tempo_bpm: Number((sumTempo / numTracks).toFixed(0))
     };
 
     return result;
@@ -70,12 +70,12 @@ export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAud
 
 /* Get total length of album in minutes from track lengths
 */
-export function albumNoteAlbumLengthMins(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): string {
+export function albumNoteAlbumLengthMins(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): number {
     let length_min = 0;
     
     albumTracksAudioFeatures.forEach(track => {
         length_min += (track.duration_ms / 60000);
     });
 
-    return length_min.toFixed(0);
+    return Number(length_min.toFixed(0));
 }
