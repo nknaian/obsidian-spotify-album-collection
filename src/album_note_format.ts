@@ -15,13 +15,15 @@ export function albumNoteTitle(album: SpotifyAlbum): string {
     }
 }
 
-export function albumNoteImageLink(album: SpotifyAlbum): string {
+export function albumNoteContent(album: SpotifyAlbum, tracks: SpotifyTrack[]): string {
     let imageUrl = undefined
     if (album.images !== undefined) {
         imageUrl = album.images[0].url;
     }
+    const album_link_html = `<a href="${album.external_urls?.spotify}"><img src="${imageUrl}" alt="Open in Spotify"></a>`
+    const track_list = tracks?.map(track => `- ${track.name}`).join('\n');
 
-    return `<a href="${album.external_urls?.spotify}"><img src="${imageUrl}" alt="Open in Spotify"></a>`
+    return `\n${album_link_html}\n\n## Track List\n${track_list}\n## Notes\n`
 }
 
 /* Get average audio features for the album from array of track audio features and return

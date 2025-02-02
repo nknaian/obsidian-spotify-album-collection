@@ -2,7 +2,7 @@ import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'ob
 
 import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL, SpotifyTrack } from './spotify_api';
 
-import { albumNoteImageLink, albumNoteTitle, albumNoteAlbumLengthMins } from './album_note_format'
+import { albumNoteContent, albumNoteTitle, albumNoteAlbumLengthMins } from './album_note_format'
 
 
 interface AlbumCollectionSettings {
@@ -44,11 +44,6 @@ export default class AlbumCollectionPlugin extends Plugin {
 							new Notice(`Album with same name already imported. If this is a different album, please adjust the name of the existing note to differentiate them`);
 							this.app.workspace.getLeaf().openFile(file);
 						} else {
-							// Create file, filling initially with image link and headings
-							const newFile = await this.app.vault.create(filePath, `\n${albumNoteImageLink(albumResult)}\n\n`);
-							this.app.workspace.getLeaf().openFile(newFile);
-	
-							// Attach various info about the album to the note as properties
 							if (albumResult.id !== undefined) {
 								const albumTracks: SpotifyTrack[] = await spotifyApi.albumTracks(albumResult.id);
 								
@@ -57,6 +52,13 @@ export default class AlbumCollectionPlugin extends Plugin {
 									cover_image = albumResult.images[0].url;
 								}
 							
+								// Create file, filling initially with image link and headings
+								const newFile = await this.app.vault.create(filePath, `${albumNoteContent(albumResult, albumTracks)}`);
+								
+								// Open the file
+								this.app.workspace.getLeaf().openFile(newFile);
+
+								// Attach various info about the album to the note as properties
 								this.app.fileManager.processFrontMatter(newFile, async (fm) => {
 									fm['artists'] = albumResult.artists?.map(artist => `[[${artist.name}]]`);
 									fm['release_date'] = albumResult.release_date;
