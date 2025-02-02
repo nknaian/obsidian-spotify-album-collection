@@ -1,5 +1,5 @@
 import { Notice } from 'obsidian';
-import { SpotifyAlbum, SpotifyTrackAudioFeatures } from './spotify_api'
+import { SpotifyAlbum, SpotifyTrack, SpotifyTrackAudioFeatures } from './spotify_api'
 
 
 export function albumNoteTitle(album: SpotifyAlbum): string {
@@ -26,6 +26,7 @@ export function albumNoteImageLink(album: SpotifyAlbum): string {
 
 /* Get average audio features for the album from array of track audio features and return
    an text representation, utilizing progress bars to represent 0-1 values
+   AUDIO FEATURES ENDPOINT HAS BEEN DEPCREIATED
 */
 export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): { [key: string]: number }  {
     const numTracks = albumTracksAudioFeatures.length;
@@ -70,10 +71,10 @@ export function albumNoteAudioFeatures(albumTracksAudioFeatures: SpotifyTrackAud
 
 /* Get total length of album in minutes from track lengths
 */
-export function albumNoteAlbumLengthMins(albumTracksAudioFeatures: SpotifyTrackAudioFeatures[]): number {
+export function albumNoteAlbumLengthMins(spotifyTracks: SpotifyTrack[]): number {
     let length_min = 0;
     
-    albumTracksAudioFeatures.forEach(track => {
+    spotifyTracks.forEach(track => {
         length_min += (track.duration_ms / 60000);
     });
 

@@ -148,6 +148,7 @@ export interface SpotifyTrack {
     id: string;
     name: string;
     uri: string;
+    duration_ms: number;
 }
   
 interface SpotifyAlbumTracks {
@@ -155,6 +156,7 @@ interface SpotifyAlbumTracks {
         id: string;
         name: string;
         uri: string;
+        duration_ms: number;
     }[];
 }
 

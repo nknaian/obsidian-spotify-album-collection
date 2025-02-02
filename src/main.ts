@@ -1,8 +1,9 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, Vault } from 'obsidian';
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
-import { SpotifyApi, SpotifyAlbum, SpotifyTrackAudioFeatures, SpotifyAlbumURL } from './spotify_api';
+import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL, SpotifyTrack } from './spotify_api';
 
-import { albumNoteAudioFeatures, albumNoteImageLink, albumNoteTitle, albumNoteAlbumLengthMins } from './album_note_format'
+import { albumNoteImageLink, albumNoteTitle, albumNoteAlbumLengthMins } from './album_note_format'
+
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -49,9 +50,8 @@ export default class AlbumCollectionPlugin extends Plugin {
 	
 							// Attach various info about the album to the note as properties
 							if (albumResult.id !== undefined) {
-								const albumTrackIds: string[] = (await spotifyApi.albumTracks(albumResult.id)).map(track => track.id);
-								const albumTracksAudioFeatures: SpotifyTrackAudioFeatures[] = await spotifyApi.tracksAudioFeatures(albumTrackIds);
-								const avgAlbumAudioFeatures = albumNoteAudioFeatures(albumTracksAudioFeatures);
+								const albumTracks: SpotifyTrack[] = await spotifyApi.albumTracks(albumResult.id);
+								
 								let cover_image = ""
 								if (albumResult.images !== undefined) {
 									cover_image = albumResult.images[0].url;
@@ -60,16 +60,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 								this.app.fileManager.processFrontMatter(newFile, async (fm) => {
 									fm['artists'] = albumResult.artists?.map(artist => `[[${artist.name}]]`);
 									fm['release_date'] = albumResult.release_date;
-									fm['length_mins'] = albumNoteAlbumLengthMins(albumTracksAudioFeatures);
-									fm['acousticness'] = avgAlbumAudioFeatures['acousticness'];
-									fm['danceability'] = avgAlbumAudioFeatures['danceability'];
-									fm['energy'] = avgAlbumAudioFeatures['energy'];
-									fm['instrumentalness'] = avgAlbumAudioFeatures['instrumentalness'];
-									fm['liveness'] = avgAlbumAudioFeatures['liveness'];
-									fm['speechiness'] = avgAlbumAudioFeatures['speechiness'];
-									fm['valence'] = avgAlbumAudioFeatures['valence'];
-									fm['loudness_dB'] = avgAlbumAudioFeatures['loudness_dB'];
-									fm['tempo_bpm'] = avgAlbumAudioFeatures['tempo_bpm'];
+									fm['length_mins'] = albumNoteAlbumLengthMins(albumTracks);
 									fm['album_type'] = albumResult.album_type;
 									fm['cover_image'] = cover_image;
 									fm['spotify_url'] = albumResult.external_urls?.spotify
