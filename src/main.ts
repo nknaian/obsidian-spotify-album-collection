@@ -2,8 +2,9 @@ import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'ob
 
 import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL, SpotifyTrack } from './spotify_api';
 
-import { albumNoteContent, albumNoteTitle, albumNoteAlbumLengthMins } from './album_note_format'
+import { albumNoteContent, albumNoteTitle} from './album_note_format'
 
+import { albumLengthMins, coverImage, spotifyUrl } from './spotify_helper';
 
 interface AlbumCollectionSettings {
 	spotifyClientId: string;
@@ -46,18 +47,8 @@ export default class AlbumCollectionPlugin extends Plugin {
 						} else {
 							if (albumResult.id !== undefined) {
 								const albumTracks: SpotifyTrack[] = await spotifyApi.albumTracks(albumResult.id);
-								
-								// Get cover image
-								let cover_image = ""
-								if (albumResult.images !== undefined) {
-									cover_image = albumResult.images[0].url;
-								}
-
-								// Get spotify url
-								let spotify_url = ""
-								if (albumResult.external_urls !== undefined) {
-									spotify_url = albumResult.external_urls.spotify;
-								}
+								const cover_image = coverImage(albumResult);
+								const spotify_url = spotifyUrl(albumResult);
 							
 								// Create file, filling initially with image link and headings
 								const newFile = await this.app.vault.create(filePath, `${albumNoteContent(albumTracks, cover_image, spotify_url)}`);
@@ -69,7 +60,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 								this.app.fileManager.processFrontMatter(newFile, async (fm) => {
 									fm['artists'] = albumResult.artists?.map(artist => `[[${artist.name}]]`);
 									fm['release_date'] = albumResult.release_date;
-									fm['length_mins'] = albumNoteAlbumLengthMins(albumTracks);
+									fm['length_mins'] = albumLengthMins(albumTracks);
 									fm['album_type'] = albumResult.album_type;
 									fm['cover_image'] = cover_image;
 									fm['spotify_url'] = spotify_url
