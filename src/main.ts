@@ -47,13 +47,20 @@ export default class AlbumCollectionPlugin extends Plugin {
 							if (albumResult.id !== undefined) {
 								const albumTracks: SpotifyTrack[] = await spotifyApi.albumTracks(albumResult.id);
 								
+								// Get cover image
 								let cover_image = ""
 								if (albumResult.images !== undefined) {
 									cover_image = albumResult.images[0].url;
 								}
+
+								// Get spotify url
+								let spotify_url = ""
+								if (albumResult.external_urls !== undefined) {
+									spotify_url = albumResult.external_urls.spotify;
+								}
 							
 								// Create file, filling initially with image link and headings
-								const newFile = await this.app.vault.create(filePath, `${albumNoteContent(albumResult, albumTracks)}`);
+								const newFile = await this.app.vault.create(filePath, `${albumNoteContent(albumTracks, cover_image, spotify_url)}`);
 								
 								// Open the file
 								this.app.workspace.getLeaf().openFile(newFile);
@@ -65,7 +72,7 @@ export default class AlbumCollectionPlugin extends Plugin {
 									fm['length_mins'] = albumNoteAlbumLengthMins(albumTracks);
 									fm['album_type'] = albumResult.album_type;
 									fm['cover_image'] = cover_image;
-									fm['spotify_url'] = albumResult.external_urls?.spotify
+									fm['spotify_url'] = spotify_url
 								});
 							}
 						}
