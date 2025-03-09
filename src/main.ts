@@ -1,4 +1,4 @@
-import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
+import { App, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, moment } from 'obsidian';
 
 import { SpotifyApi, SpotifyAlbum, SpotifyAlbumURL, SpotifyTrack } from './spotify_api';
 
@@ -63,7 +63,10 @@ export default class AlbumCollectionPlugin extends Plugin {
 									fm['length_mins'] = albumLengthMins(albumTracks);
 									fm['album_type'] = albumResult.album_type;
 									fm['cover_image'] = cover_image;
-									fm['spotify_url'] = spotify_url
+									fm['spotify_url'] = spotify_url;
+									fm['created'] = moment().format("YYYY-MM-DD");
+									fm['listen_format'] = "spotify";
+									fm['listen_category'] = "new-arrival";
 								});
 							}
 						}
